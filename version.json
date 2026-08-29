@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.20-69",
+  "notes": "Attendance now uses SF2 codes: half-shaded Tardy (late comer / cutting) replaces Late; NLS reason list in the dropdown. -Ram"
+}

@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.20-68",
-  "notes": "Fixed a syntax error that prevented the app from loading (restored Word-report function header). -Ram"
-}

@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.20-73",
+  "notes": "SF9 Attendance Record now pulls real attendance, incl. falling back to the class record when the subject record has none, and using marked dates when a term range is unset. -Ram"
+}

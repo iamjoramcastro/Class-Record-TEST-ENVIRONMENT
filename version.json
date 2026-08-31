@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.20-74",
+  "notes": "SF9 now shades term columns gray for subjects not offered in that term (based on the subject coverage). -Ram"
+}

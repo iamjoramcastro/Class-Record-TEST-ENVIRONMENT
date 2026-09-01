@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.20-76",
+  "notes": "MAPEH parent can now generate PL reports (per part + combined). SF9 adds direct Print: A5 landscape, front then back on separate sheets. -Ram"
+}

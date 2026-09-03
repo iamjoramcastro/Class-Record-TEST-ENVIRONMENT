@@ -1,4 +1,4 @@
-const APP_VERSION = "2026.08.20-88";
+const APP_VERSION = "2026.08.20-89";
 const CACHE = "ecr-shell-" + APP_VERSION;
 
 const ASSETS = [

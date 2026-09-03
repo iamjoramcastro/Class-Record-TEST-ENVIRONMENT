@@ -1,4 +1,4 @@
 {
-  "version": "2026.08.20-88",
-  "notes": "Subjects: offline Export/Import subject-data files (all terms, attendance, roster, settings), merging into an existing subject. Handback and re-transfer now carry full grade data for every term. -Ram"
+  "version": "2026.08.20-89",
+  "notes": "Consolidated Grades: when a section/term filter hides all subjects, the section and term pickers now stay visible (with Show all sections) so you can reach your other subjects instead of being stuck. -Ram"
 }

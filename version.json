@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.20-88",
+  "notes": "Subjects: offline Export/Import subject-data files (all terms, attendance, roster, settings), merging into an existing subject. Handback and re-transfer now carry full grade data for every term. -Ram"
+}

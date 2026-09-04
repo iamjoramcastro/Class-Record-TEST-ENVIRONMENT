@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.20-89",
-  "notes": "Consolidated Grades: when a section/term filter hides all subjects, the section and term pickers now stay visible (with Show all sections) so you can reach your other subjects instead of being stuck. -Ram"
-}

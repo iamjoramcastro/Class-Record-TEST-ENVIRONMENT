@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.20-96",
-  "notes": "Privacy: the adviser now only ever receives FINAL grades from subject teachers — never the raw component scores (WW/PT/ST/Term Exam). Removed the hand-back paths that could have copied a teacher raw scores to the adviser. -Ram"
-}

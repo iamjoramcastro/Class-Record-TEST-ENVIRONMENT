@@ -3238,8 +3238,8 @@ function dashProfDrill(idx){
   const ranges=["90–100","80–89","75–79","65–74","0–64"];
   const cols=["#0E7C46","#2E8FD6","#8FA6BE","#E0A020","#C7382E"];
   // Band selector chips
-  const chip=(label,range,count,c,key,color)=>`
-    <button class="bandChip" data-band="${key}" data-color="${color||""}">
+  const chip=(label,range,count,key,color)=>`
+    <button class="bandChip" data-band="${key}">
       <span class="bcDot" style="background:${color||"#B9C4D2"}"></span>
       <span class="bcLbl">${esc(label)}<span class="bcRange">${esc(range)}</span></span>
       <span class="bcCount">${count}</span>
@@ -3337,7 +3337,11 @@ function vClasses(){
         <td class="colTools" style="justify-content:flex-end">
           <button class="btn sm" data-assign="${id}">Students</button>
           ${gone?`<button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`
-            :(cs?`<button class="btn sm" data-clsshare="${id}">Show code</button><button class="btn sm ${r.lockedByMe?"accent":""}" data-clslock="${id}" title="${r.lockedByMe?"Unlock so the subject teacher can edit grades again":"Lock grades so the subject teacher can no longer edit (set a deadline)"}">${r.lockedByMe?"🔒 Unlock":"🔓 Lock"}</button><button class="btn sm danger" data-clscancel="${id}">Cancel</button><button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`:`<button class="btn sm" data-clsshare="${id}">Transfer</button><button class="btn sm" data-clsopen="${id}">Open</button><button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`)}
+            :(cs
+              ?(transferAccepted(r)
+                ?`<button class="btn sm" data-clsshare="${id}">Show code</button><button class="btn sm ${r.lockedByMe?"accent":""}" data-clslock="${id}" title="${r.lockedByMe?"Unlock so the subject teacher can edit grades again":"Lock grades so the subject teacher can no longer edit (set a deadline)"}">${r.lockedByMe?"🔒 Unlock":"🔓 Lock"}</button><button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`
+                :`<button class="btn sm" data-clsshare="${id}">Show code</button><button class="btn sm danger" data-clscancel="${id}">Cancel</button><button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`)
+              :`<button class="btn sm" data-clsshare="${id}">Transfer</button><button class="btn sm" data-clsopen="${id}">Open</button><button class="btn sm" data-subjedit="${id}">Edit</button><button class="btn sm danger" data-subjdel="${id}">Delete</button>`)}
         </td></tr>`;
     }).join("");
     return `<div class="card">
@@ -4868,7 +4872,8 @@ function vSubjects(){
         ${(()=>{
           const owned=!r.fromAdviser;            // this account created the subject (adviser)
           const shared=!!cs;                      // it has been transferred out
-          const canLock=owned&&shared&&!isHandedBack;
+          const accepted=shared&&transferAccepted(r); // the subject teacher has accepted
+          const canLock=owned&&accepted&&!isHandedBack; // lock only once a teacher holds it
           const lockBtn=canLock?`<button class="btn sm ${r.lockedByMe?"accent":""}" data-clslock="${id}" title="${r.lockedByMe?"Unlock so the subject teacher can edit grades again":"Lock grades so the subject teacher can no longer edit (set a deadline)"}">${r.lockedByMe?"🔒 Unlock grades":"🔓 Lock grades"}</button>`:"";
           if(isHandedBack)return "";
           if(isAccepted)return `<button class="btn sm primary" data-postgrades="${id}" title="Send your grades to the adviser">${r.postedAt?"Re-post grades":"Post grades"}</button>`;

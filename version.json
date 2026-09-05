@@ -1,4 +1,4 @@
 {
-  "version": "2026.08.21-101",
-  "notes": "Fixed: Lock/Unlock button now also appears in the section-card subject list (was only in the flat subjects view). Dashboard: clicking a subject in Level of Progress opens a drill-down — tap a descriptor band to see the learners and their actual grades. -Ram"
+  "version": "2026.08.21-102",
+  "notes": "Lock button now appears only on subjects the teacher has ACCEPTED (not while awaiting). Fixed dashboard proficiency drill-down: clicking a level (Advancing, etc.) now correctly lists the learners and their grades (data-band key bug). -Ram"
 }

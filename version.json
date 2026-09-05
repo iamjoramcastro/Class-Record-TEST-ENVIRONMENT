@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.21-103",
+  "notes": "Dashboard now has a Transferred subjects panel: every subject you transferred out, with its status, a Lock/Unlock button (on accepted ones), Export/Import data, and the transfer Code — all in one place, no clicking through cards. -Ram"
+}

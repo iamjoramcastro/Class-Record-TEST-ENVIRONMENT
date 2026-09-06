@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Access Admin · JayCee e-ClassRecord Pro</title>
+<style>
+  :root{
+    --paper:#F6F8FB;--ink:#12233A;--muted:#5C6B7E;--grid:#E2E8F0;--grid-soft:#F1F5F9;
+    --pri:#1E5AA8;--pri-d:#17457F;--pass:#1F9254;--warn:#C98A1E;--danger:#C23B3B;--card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);
+    background:linear-gradient(180deg,#FDFEFF,var(--paper) 60%);min-height:100dvh}
+  .wrap{max-width:920px;margin:0 auto;padding:22px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:18px;letter-spacing:.2px}
+  .brand small{display:block;font-weight:600;font-size:12px;color:var(--muted)}
+  .spacer{margin-left:auto}
+  .chip{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--grid-soft);border:1px solid var(--grid);color:var(--muted)}
+  .btn{appearance:none;border:1px solid var(--grid);background:#fff;color:var(--ink);padding:8px 14px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{border-color:#cfd8e3}
+  .btn.sm{padding:6px 11px;font-size:13px}
+  .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn.primary:hover{background:var(--pri-d)}
+  .btn.pass{background:var(--pass);border-color:var(--pass);color:#fff}
+  .btn.danger{background:#fff;border-color:#e6b3b3;color:var(--danger)}
+  .btn.danger:hover{background:#fdf1f1}
+  .btn.block{display:block;width:100%}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .card{background:var(--card);border:1px solid var(--grid);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.05);margin-bottom:18px;overflow:hidden}
+  .cardHead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--grid);background:var(--grid-soft)}
+  .cardHead h2{font-size:15px;margin:0}
+  .badge{font-size:12px;background:#fff;border:1px solid var(--grid);border-radius:999px;padding:2px 9px;color:var(--muted)}
+  .cardBody{padding:6px 8px}
+  .empty{padding:22px;text-align:center;color:var(--muted);font-size:14px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--grid-soft);font-size:14px;vertical-align:middle}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
+  tr:last-child td{border-bottom:none}
+  .em{font-weight:600;word-break:break-all}
+  .sub{font-size:12px;color:var(--muted)}
+  .st{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.3px}
+  .st.pending{background:#FFF6E6;color:var(--warn)}
+  .st.approved{background:#E7F6EE;color:var(--pass)}
+  .st.rejected{background:#FBEDED;color:var(--danger)}
+  .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+  .gate{max-width:400px;margin:8vh auto 0;background:#fff;border:1px solid var(--grid);border-radius:16px;padding:26px 24px;box-shadow:0 10px 40px rgba(0,0,0,.06)}
+  .gate h1{font-size:19px;margin:0 0 4px}
+  .gate p{color:var(--muted);margin:0 0 16px;font-size:14px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .field input{width:100%;padding:10px 12px;border:1px solid var(--grid);border-radius:9px;font:inherit}
+  .msg{font-size:13px;margin-top:10px;min-height:18px}  .msg.err{color:var(--danger)}.msg.ok{color:var(--pass)}
+  .pwBack{position:fixed;inset:0;background:rgba(18,35,58,.5);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+  .pwBack.on{display:flex}
+  .pwBox{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+  .pwBox h3{margin:0 0 4px;font-size:18px}
+  .pwHint{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .pwBox .field{margin-bottom:12px}
+  .pwActions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#12233A;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+  .toast.on{opacity:1}
+  .toast.err{background:#8f2b2b}.toast.ok{background:#1F7A47}
+  .hide{display:none!important}
+  .searchRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .searchRow input{flex:1 1 220px;min-width:0;padding:10px 12px;border:1px solid var(--grid);border-radius:9px;font:inherit}
+  .searchRow input:focus{outline:none;border-color:var(--pri)}
+</style>
+</head>
+<body>
+
+<div id="gateView">
+  <div class="gate">
+    <h1>Access Admin</h1>
+    <p>Sign in with an administrator account to approve or decline access requests.</p>
+    <div class="field"><label for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="email" placeholder="admin@example.com"></div>
+    <div class="field"><label for="gPass">Password</label><input id="gPass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+    <button class="btn primary block" id="gSignIn">Sign in</button>
+    <div class="msg" id="gMsg"></div>
+  </div>
+  <p class="foot">JayCee e-ClassRecord Pro · administrator console</p>
+</div>
+
+<div id="adminView" class="hide">
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">Access Admin<small>JayCee e-ClassRecord Pro approvals</small></div>
+      <span class="spacer"></span>
+      <span class="chip" id="whoChip"></span>
+      <button class="btn sm" id="backupBtn" title="Download a full backup of the access database">⬇ Backup</button>
+      <button class="btn sm" id="pwBtn" title="Change your admin password">🔑 Password</button>
+      <button class="btn sm" id="refreshBtn">Refresh</button>
+      <button class="btn sm" id="signOutBtn">Sign out</button>
+    </div>
+
+    <div class="searchRow">
+      <input id="searchInput" type="search" placeholder="Search by email, name, or UID…" autocomplete="off">
+      <button class="btn primary" id="searchBtn">Search</button>
+      <button class="btn" id="searchClear">Clear</button>
+    </div>
+
+    <div class="card">
+      <div class="cardHead"><h2>Pending requests</h2><span class="badge" id="pendCount">0</span></div>
+      <div class="cardBody"><div id="pendWrap"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="cardHead"><h2>Approved users</h2><span class="badge" id="apprCount">0</span></div>
+      <div class="cardBody"><div id="apprWrap"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="cardHead"><h2>Declined</h2><span class="badge" id="rejCount">0</span></div>
+      <div class="cardBody"><div id="rejWrap"></div></div>
+    </div>
+
+    <p class="foot">Approving a user lets them unlock the app and sync their own record book. Declining or revoking blocks their access on their next sync.</p>
+  </div>
+</div>
+
+<div class="pwBack" id="pwModalBack">
+  <div class="pwBox">
+    <h3>Change password</h3>
+    <p class="pwHint">Enter your current password, then choose a new one.</p>
+    <div class="field"><label for="pwCur">Current password</label><input id="pwCur" type="password" autocomplete="current-password"></div>
+    <div class="field"><label for="pwNew">New password</label><input id="pwNew" type="password" autocomplete="new-password" placeholder="At least 6 characters"></div>
+    <div class="field"><label for="pwNew2">Confirm new password</label><input id="pwNew2" type="password" autocomplete="new-password"></div>
+    <div class="msg" id="pwMsg"></div>
+    <div class="pwActions">
+      <button class="btn" id="pwCancel">Cancel</button>
+      <button class="btn primary" id="pwSave">Change password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==== Firebase config (same project as the app) ==== */
+const _cfgParts=[
+  "YXBpS2V5PUFJemFTeUJhaHllVjBPNktXTmh5OENVLUJSajFSQjBlZEtrZG94dw==",
+  "YXV0aERvbWFpbj1lY2xhc3NyZWNvcmQyLmZpcmViYXNlYXBwLmNvbQ==",
+  "ZGF0YWJhc2VVUkw9aHR0cHM6Ly9lY2xhc3NyZWNvcmQyLWRlZmF1bHQtcnRkYi5maXJlYmFzZWlvLmNvbQ==",
+  "cHJvamVjdElkPWVjbGFzc3JlY29yZDI=",
+  "c3RvcmFnZUJ1Y2tldD1lY2xhc3NyZWNvcmQyLmZpcmViYXNlc3RvcmFnZS5hcHA=",
+  "bWVzc2FnaW5nU2VuZGVySWQ9MTMzNzM4Nzk3Mjc4",
+  "YXBwSWQ9MToxMzM3Mzg3OTcyNzg6d2ViOmYwOTM4MjgwYmUyYTIzOWNlMmNhNGY="
+];
+const FIREBASE_CONFIG=(()=>{const o={};_cfgParts.forEach(p=>{const kv=atob(p);const i=kv.indexOf("=");o[kv.slice(0,i)]=kv.slice(i+1)});return o})();
+
+/* ==== ADMIN ALLOW-LIST — replace these dummy values with your real ones ==== */
+/* Each admin needs BOTH their Firebase UID and their email (lowercase).      */
+/* Get the UID from Firebase Console → Authentication → Users.                */
+/* These MUST also be listed in the Security Rules (see rules file).          */
+const ADMIN_UIDS=[
+  "REPLACE_WITH_ADMIN_UID_1"
+];
+const ADMIN_EMAILS=[
+  "admin@example.com"
+];
+
+/* ==== SDK ==== */
+const SDK_BASE="https://www.gstatic.com/firebasejs/10.14.1/";
+const SDKS=["firebase-app-compat.js","firebase-auth-compat.js","firebase-database-compat.js","firebase-app-check-compat.js"];
+const APPCHECK_SITE_KEY="6LfQvlktAAAAAI0h0JMwIwHQ9HZQ6JkiZ8jtO-8i";
+
+let fb=null,auth=null,db=null,user=null;
+
+function $(s){return document.querySelector(s)}
+let _tt=null;
+function toast(m,kind){const t=$("#toast");t.textContent=m;t.className="toast on"+(kind?" "+kind:"");clearTimeout(_tt);_tt=setTimeout(()=>t.className="toast",2600)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmtTs(ts){if(!ts)return"—";try{return new Date(ts).toLocaleString()}catch(e){return"—"}}
+
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("load "+src));document.head.appendChild(s)})}
+
+function isAdmin(u){
+  if(!u)return false;
+  const em=(u.email||"").toLowerCase();
+  return ADMIN_UIDS.includes(u.uid)||ADMIN_EMAILS.includes(em);
+}
+
+async function boot(){
+  try{
+    for(const f of SDKS)await loadScript(SDK_BASE+f);
+  }catch(e){$("#gMsg").className="msg err";$("#gMsg").textContent="Couldn't load Firebase. Check your connection.";return}
+  fb=window.firebase;
+  fb.initializeApp(FIREBASE_CONFIG);
+
+  if(APPCHECK_SITE_KEY){
+    try{
+      const ac=fb.appCheck();
+      ac.activate(APPCHECK_SITE_KEY,true);
+    }catch(e){}
+  }
+
+  auth=fb.auth();
+  db=fb.database();
+
+  auth.onAuthStateChanged(async u=>{
+    if(u&&isAdmin(u)){
+      user=u;
+      $("#gateView").classList.add("hide");
+      $("#adminView").classList.remove("hide");
+      $("#whoChip").textContent=u.email||u.uid;
+      subscribe();
+    }else if(u&&!isAdmin(u)){
+      // Signed in but not an admin — bounce out.
+      $("#gMsg").className="msg err";
+      $("#gMsg").textContent="This account is not an administrator.";
+      try{await auth.signOut()}catch(e){}
+    }else{
+      user=null;
+      unsubscribe();
+      $("#adminView").classList.add("hide");
+      $("#gateView").classList.remove("hide");
+    }
+  });
+}
+
+$("#gSignIn").addEventListener("click",signIn);
+$("#gPass").addEventListener("keydown",e=>{if(e.key==="Enter")signIn()});
+async function signIn(){
+  const em=$("#gEmail").value.trim(),pw=$("#gPass").value;
+  const msg=$("#gMsg");msg.className="msg";msg.textContent="";
+  if(!em||!pw){msg.className="msg err";msg.textContent="Enter your email and password.";return}
+  $("#gSignIn").disabled=true;
+  try{
+    await auth.signInWithEmailAndPassword(em,pw);
+  }catch(e){
+    msg.className="msg err";
+    msg.textContent=authErr(e);
+  }
+  $("#gSignIn").disabled=false;
+}
+function authErr(e){
+  const c=e&&e.code||"";
+  if(c==="auth/wrong-password"||c==="auth/invalid-credential")return"Wrong email or password.";
+  if(c==="auth/user-not-found")return"No account with that email.";
+  if(c==="auth/too-many-requests")return"Too many attempts. Try again later.";
+  if(c==="auth/invalid-email")return"That email doesn't look right.";
+  return(e&&e.message)||"Sign-in failed.";
+}
+
+$("#signOutBtn").addEventListener("click",async()=>{unsubscribe();try{await auth.signOut()}catch(e){}});
+$("#refreshBtn").addEventListener("click",()=>{loadOnce()});
+
+/* ---- Full database backup (branded filename with date + time) ---- */
+function stampName(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,"0");
+  return "JayCee e-ClassRecord Pro "+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+"-"+p(d.getMinutes())+"-"+p(d.getSeconds());
+}
+$("#backupBtn").addEventListener("click",async()=>{
+  const btn=$("#backupBtn");btn.disabled=true;const old=btn.textContent;btn.textContent="Backing up…";
+  try{
+    const access=(await db.ref("access").get()).val()||{};
+    let admins=null;
+    try{admins=(await db.ref("admins").get()).val();}catch(e){}
+    const backup={
+      app:"JayCee e-ClassRecord Pro",
+      kind:"access-database-backup",
+      exportedAt:new Date().toISOString(),
+      exportedBy:(user&&user.email)||"",
+      counts:{users:Object.keys(access).length},
+      access:access
+    };
+    if(admins)backup.admins=admins;
+    const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=stampName()+".json";
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+    toast("Backup downloaded ("+Object.keys(access).length+" users)","ok");
+  }catch(e){
+    toast("Backup failed — check your admin rights.","err");
+  }
+  btn.disabled=false;btn.textContent=old;
+});
+
+/* ---- Change / reset admin password ---- */
+$("#pwBtn").addEventListener("click",()=>{
+  if(!user){toast("Sign in first","err");return}
+  const back=$("#pwModalBack");
+  if(!back)return;
+  $("#pwCur").value="";$("#pwNew").value="";$("#pwNew2").value="";
+  $("#pwMsg").textContent="";$("#pwMsg").className="msg";
+  back.classList.add("on");
+  setTimeout(()=>$("#pwCur").focus(),60);
+  ["pwCur","pwNew","pwNew2"].forEach(id=>{const el=$("#"+id);if(el)el.onkeydown=e=>{if(e.key==="Enter")doChangePassword();};});
+});
+function closePwModal(){const b=$("#pwModalBack");if(b)b.classList.remove("on");}
+document.addEventListener("click",e=>{
+  if(e.target&&e.target.id==="pwCancel")closePwModal();
+  if(e.target&&e.target.id==="pwModalBack")closePwModal();
+  if(e.target&&e.target.id==="pwSave")doChangePassword();
+});
+async function doChangePassword(){
+  const cur=$("#pwCur").value,nw=$("#pwNew").value,nw2=$("#pwNew2").value;
+  const msg=$("#pwMsg");msg.className="msg";
+  if(!cur||!nw){msg.className="msg err";msg.textContent="Fill in all fields.";return}
+  if(nw.length<6){msg.className="msg err";msg.textContent="New password must be at least 6 characters.";return}
+  if(nw!==nw2){msg.className="msg err";msg.textContent="The new passwords don't match.";return}
+  const btn=$("#pwSave");btn.disabled=true;btn.textContent="Saving…";
+  try{
+    const cred=fb.auth.EmailAuthProvider.credential(user.email,cur);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(nw);
+    msg.className="msg ok";msg.textContent="Password changed. Please remember your new password.";
+    toast("Password updated","ok");
+    setTimeout(closePwModal,1200);
+  }catch(e){
+    const c=e&&e.code||"";
+    msg.className="msg err";
+    msg.textContent=(c==="auth/wrong-password"||c==="auth/invalid-credential")?"Your current password is incorrect."
+      :c==="auth/weak-password"?"New password is too weak."
+      :c==="auth/requires-recent-login"?"Please sign out and sign in again, then retry."
+      :((e&&e.message)||"Couldn't change the password.");
+  }
+  btn.disabled=false;btn.textContent="Change password";
+}
+
+const _si=$("#searchInput");
+function runSearch(){_query=_si.value||"";paint()}
+$("#searchBtn").addEventListener("click",runSearch);
+_si.addEventListener("input",runSearch);
+_si.addEventListener("keydown",e=>{if(e.key==="Enter")runSearch()});
+$("#searchClear").addEventListener("click",()=>{_si.value="";_query="";paint();_si.focus()});
+
+let _ref=null;
+function unsubscribe(){if(_ref){try{_ref.off()}catch(e){}_ref=null}}
+function subscribe(){
+  unsubscribe();
+  _ref=db.ref("access");
+  _ref.on("value",snap=>render(snap.val()||{}),err=>{
+    if(!user)return; // ignore permission errors that fire during sign-out teardown
+    toast("Can't read requests — check the Security Rules are deployed.","err");
+  });
+}
+async function loadOnce(){
+  try{const snap=await db.ref("access").get();render(snap.val()||{});toast("Refreshed","ok")}
+  catch(e){toast("Refresh failed.","err")}
+}
+
+let _allData={};
+let _query="";
+function render(all){
+  _allData=all||{};
+  paint();
+}
+function paint(){
+  let rows=Object.entries(_allData).map(([uid,v])=>Object.assign({uid},v||{}));
+  const q=_query.trim().toLowerCase();
+  if(q){
+    rows=rows.filter(r=>
+      (r.email||"").toLowerCase().includes(q)||
+      (r.name||"").toLowerCase().includes(q)||
+      (r.uid||"").toLowerCase().includes(q)
+    );
+  }
+  const pending=rows.filter(r=>(r.status||"pending")==="pending");
+  const approved=rows.filter(r=>r.status==="approved");
+  const rejected=rows.filter(r=>r.status==="rejected");
+
+  $("#pendCount").textContent=pending.length;
+  $("#apprCount").textContent=approved.length;
+  $("#rejCount").textContent=rejected.length;
+
+  $("#pendWrap").innerHTML=table(pending,"pending",!!q);
+  $("#apprWrap").innerHTML=table(approved,"approved",!!q);
+  $("#rejWrap").innerHTML=table(rejected,"rejected",!!q);
+
+  bindActions();
+}
+
+function table(list,kind,searching){
+  if(!list.length){
+    if(searching)return `<div class="empty">No matches.</div>`;
+    const m=kind==="pending"?"No pending requests.":kind==="approved"?"No approved users yet.":"No declined requests.";
+    return `<div class="empty">${m}</div>`;
+  }
+  list.sort((a,b)=>(b.requestedAt||0)-(a.requestedAt||0));
+  const head=`<tr><th>User</th><th>Status</th><th>Requested</th><th></th></tr>`;
+  const body=list.map(r=>{
+    const st=r.status||"pending";
+    let acts="";
+    if(kind==="pending"){
+      acts=`<button class="btn sm pass" data-approve="${esc(r.uid)}">Approve</button>
+            <button class="btn sm danger" data-reject="${esc(r.uid)}">Decline</button>`;
+    }else if(kind==="approved"){
+      acts=`<button class="btn sm danger" data-reject="${esc(r.uid)}">Revoke</button>`;
+    }else{
+      acts=`<button class="btn sm pass" data-approve="${esc(r.uid)}">Approve</button>`;
+    }
+    return `<tr>
+      <td><div class="em">${esc(r.email||"(no email)")}</div><div class="sub">${esc(r.name||"")} ${r.name?"· ":""}${esc(r.uid)}</div></td>
+      <td><span class="st ${st}">${st}</span></td>
+      <td class="sub">${fmtTs(r.requestedAt)}</td>
+      <td><div class="acts">${acts}</div></td>
+    </tr>`;
+  }).join("");
+  return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function bindActions(){
+  document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>setStatus(b.getAttribute("data-approve"),"approved",b));
+  document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>setStatus(b.getAttribute("data-reject"),"rejected",b));
+}
+
+async function setStatus(uid,status,btn){
+  if(!uid)return;
+  if(btn)btn.disabled=true;
+  try{
+    await db.ref("access/"+uid).update({
+      status:status,
+      decidedBy:(user&&user.email)||"",
+      decidedAt:fb.database.ServerValue.TIMESTAMP
+    });
+    toast(status==="approved"?"Approved.":"Access blocked.","ok");
+  }catch(e){
+    toast("Couldn't update — check your admin rights / rules.","err");
+    if(btn)btn.disabled=false;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.21-106",
-  "notes": "Deleting a subject now also downloads a PDF summary (plus the JSON data file). Dashboard Enter grades now asks which term first. Added a Manage learners quick action. -Ram"
-}

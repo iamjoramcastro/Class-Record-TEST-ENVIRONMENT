@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.21-111",
+  "notes": "Reorganized: School information is set once per SECTION (Classes & Subjects → Edit section) and applies to all its subjects. Grading weights are now PER SUBJECT via a Weights button on each subject. Removed the duplicate My Subjects view; Settings now points to where each setting lives. -Ram"
+}

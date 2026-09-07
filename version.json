@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.21-110",
-  "notes": "Subject status labels: not transferred / awaiting acceptance / transferred / received. Cloud syncs are now coalesced (push ~4s after you stop editing, capped at 60s during continuous editing, and flushed on tab close/sign-out) — big cut in Firebase write bandwidth, with local save still instant. -Ram"
-}

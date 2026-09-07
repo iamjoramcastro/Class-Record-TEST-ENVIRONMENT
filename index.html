@@ -946,6 +946,7 @@ table.mini tr:last-child td{border-bottom:none}
       <a href="#dashboard" data-v="dashboard"><span class="k">◉</span><span class="lbl">Dashboard</span></a>
       <div class="sec">Setup</div>
       <a href="#classes" data-v="classes"><span class="k">C</span><span class="lbl">Classes &amp; Subjects</span></a>
+      <a href="#subjects" data-v="subjects"><span class="k">S</span><span class="lbl">My Subjects</span></a>
       <a href="#settings" data-v="settings"><span class="k">⚙</span><span class="lbl">Settings</span></a>
       <a href="#pool" data-v="pool"><span class="k">P</span><span class="lbl">Student Pool</span></a>
       <a href="#transfers" data-v="transfers"><span class="k">⇄</span><span class="lbl">Transfers</span></a>
@@ -1684,6 +1685,22 @@ function exportSubjectData(id){
   dl(new Blob([JSON.stringify(bundle,null,2)],{type:"application/json"}),fname);
   toast("Subject data exported");
 }
+// Does this subject (or any of its MAPEH parts) have at least one score entered?
+function hasSubjectGrades(id){
+  const r=root.records[id];if(!r)return false;
+  const target=isMapehChild(r)?mapehParentOf(r):r;
+  const recs=isMapehParent(target)?[target].concat(mapehChildren(target.id)):[target];
+  return recs.some(rr=>{
+    const t=rr.terms||{};
+    return TERMS.some(tk=>{const T=t[tk]||{};const sc=T.scores||{};return Object.values(sc).some(o=>{
+      if(!o)return false;
+      const ww=(o.ww||[]).some(v=>v!=null&&v!=="");
+      const pt=(o.pt||[]).some(v=>v!=null&&v!=="");
+      const st=o.st1!=null||o.st2!=null||o.te!=null;
+      return ww||pt||st;
+    });});
+  });
+}
 // PDF summary backup of a subject's grades (switches context to that subject, builds
 // the summary report, then restores the previously active record).
 function exportSubjectPDF(id){
@@ -1780,11 +1797,40 @@ async function importSubjectDataFile(text,targetId){
     confirmText:"Replace with imported data",cancelText:"Cancel",tone:"danger"
   });
   if(!ok)return;
-  // applyReturn overwrites settings, learners, terms, attendance, rubrics and rebuilds
-  // MAPEH parts — full control, every term — on the adviser's own record.
+
+  const isReceived=!!tgt.fromAdviser&&!tgt.handedBack;
+  if(isReceived){
+    // A subject teacher is replacing the entire grade record for a class they were
+    // given. Keep the adviser-owned class info and the transfer state intact — only
+    // the grades, terms, attendance and roster are replaced.
+    const savedInfo={};
+    SECTION_INFO_KEYS.forEach(k=>{ if(tgt.settings[k]!=null)savedInfo[k]=tgt.settings[k]; });
+    const savedTransfer={fromAdviser:tgt.fromAdviser,acceptedToken:tgt.acceptedToken,acceptedSecret:tgt.acceptedSecret,
+      classId:tgt.classId,assigned:tgt.assigned,lockedByAdviser:tgt.lockedByAdviser,gradeSection:tgt.settings.gradeSection,subject:tgt.settings.subject};
+    applyReturn(bundle,tgt.id);
+    // Restore the adviser-controlled fields the teacher must not change.
+    SECTION_INFO_KEYS.forEach(k=>{ if(savedInfo[k]!=null)tgt.settings[k]=savedInfo[k]; });
+    tgt.settings.gradeSection=savedTransfer.gradeSection;
+    tgt.settings.subject=savedTransfer.subject;
+    tgt.fromAdviser=savedTransfer.fromAdviser;
+    if(savedTransfer.acceptedToken)tgt.acceptedToken=savedTransfer.acceptedToken;
+    if(savedTransfer.acceptedSecret)tgt.acceptedSecret=savedTransfer.acceptedSecret;
+    if(savedTransfer.classId)tgt.classId=savedTransfer.classId;
+    if(savedTransfer.assigned)tgt.assigned=savedTransfer.assigned;
+    if(savedTransfer.lockedByAdviser)tgt.lockedByAdviser=savedTransfer.lockedByAdviser;
+    // Same protection for MAPEH parts.
+    if(isMapehParent(tgt))mapehChildren(tgt.id).forEach(k=>{SECTION_INFO_KEYS.forEach(key=>{if(savedInfo[key]!=null)k.settings[key]=savedInfo[key];});k.settings.gradeSection=savedTransfer.gradeSection;});
+    commit();
+    root.activeId=tgt.id;view="input";renderAll();
+    // Auto-post the replaced grades to the adviser.
+    if(tgt.acceptedToken)postGradesToAdviser(tgt.id,true).catch(()=>{});
+    toast("Class record replaced — your new grades were sent to the adviser","success");
+    return;
+  }
+
+  // Adviser side: full takeover (the imported data replaces everything and the adviser
+  // regains full control of the subject).
   applyReturn(bundle,tgt.id);
-  // The imported data replaces any transfer state: the adviser fully owns it again
-  // and can transfer it out afresh (which will carry all the imported data along).
   delete tgt.fromAdviser;
   delete tgt.handedBack;
   delete tgt.acceptedToken;
@@ -1981,9 +2027,25 @@ function scheduleAutoPost(){
   autoPostTimer=setTimeout(()=>{postGradesToAdviser(holder.id,true).catch(()=>{})},2500);
 }
 
+let _pushMaxTimer=null,_lastPushAt=0;
+const PUSH_IDLE_MS=4000;   // push this long after you stop editing
+const PUSH_MAX_MS=60000;   // …but never wait longer than this during continuous editing
 function schedulePush(){
+  // Local save already happened in commit() — this only schedules the CLOUD upload.
+  // Each cloud write sends the whole encrypted record, so we coalesce bursts of edits
+  // into far fewer uploads (big reduction in Firebase bandwidth) without risking data:
+  // the device keeps everything locally the instant you type.
   clearTimeout(pushTimer);
-  pushTimer=setTimeout(pushCloud,900);
+  pushTimer=setTimeout(()=>{clearTimeout(_pushMaxTimer);_pushMaxTimer=null;pushCloud();},PUSH_IDLE_MS);
+  // Safety cap: if you keep editing non-stop, still sync within PUSH_MAX_MS.
+  if(!_pushMaxTimer){
+    _pushMaxTimer=setTimeout(()=>{clearTimeout(pushTimer);_pushMaxTimer=null;pushCloud();},PUSH_MAX_MS);
+  }
+}
+function flushPush(){
+  // Force an immediate cloud sync (used on sign-out / page hide so nothing is left behind).
+  clearTimeout(pushTimer);clearTimeout(_pushMaxTimer);_pushMaxTimer=null;
+  if(dirty)pushCloud();
 }
 async function pushCloud(){
   if(!db||!user||offlineMode||!navigator.onLine){setSync(navigator.onLine&&user?"syncing":"offline");return}
@@ -2103,7 +2165,12 @@ async function publishRoster(cid){
     try{
       const key=await keyFromCode(secret,token);
       const roster=assignedLearners(id).map(l=>({id:l.id,n:l.name,x:l.gender}));
-      const enc=await aesEncrypt({roster,at:Date.now(),locked:!!r.lockedByMe},key);
+      // Include the adviser-controlled class/school info so it propagates to the
+      // subject teacher's copy of the record (they can't edit it themselves).
+      const info={};
+      SECTION_INFO_KEYS.forEach(k=>{ if(r.settings[k]!=null)info[k]=r.settings[k]; });
+      info.gradeSection=r.settings.gradeSection;
+      const enc=await aesEncrypt({roster,at:Date.now(),locked:!!r.lockedByMe,info:info},key);
       await db.ref("roster/"+token).set({payload:enc,iat:fb.database.ServerValue.TIMESTAMP});
     }catch(e){}
   }
@@ -2146,6 +2213,18 @@ function attachRosterListeners(){
         }
 
         const cur=r.learners||[];
+
+        // Adviser-controlled class/school info arrives here — apply it (the teacher
+        // can't edit these fields; the adviser is the single source of truth).
+        if(data.info&&typeof data.info==="object"){
+          const applyInfo=rec=>{
+            SECTION_INFO_KEYS.forEach(k=>{ if(data.info[k]!=null&&rec.settings[k]!==data.info[k]){rec.settings[k]=data.info[k];changed=true;} });
+            if(data.info.gradeSection!=null&&rec.settings.gradeSection!==data.info.gradeSection){rec.settings.gradeSection=data.info.gradeSection;changed=true;}
+          };
+          applyInfo(r);
+          if(isMapehParent(r))mapehChildren(r.id).forEach(applyInfo);
+        }
+
         data.roster.forEach(x=>{
           if(!cur.some(l=>l.id===x.id||normName(l.name)===normName(x.n))){
             cur.push({id:x.id||uid(),name:x.n,gender:x.x||"F",status:"active"});
@@ -3061,6 +3140,26 @@ function vSettings(){
   const s=(cur&&cur.settings)||defaultRecord().settings;
   const wSet=s.weightsSet===true;
   const isSHS=s.gradeLevel==="shs";
+  const isReceivedSubj=!!(cur&&cur.fromAdviser&&!cur.handedBack);
+  const inf=(label,key,val)=>isReceivedSubj
+    ? `<div class="field"><label>${esc(label)}</label><input value="${esc(val||"")}" disabled style="background:var(--grid-soft);color:var(--muted)"></div>`
+    : inp(label,key,val);
+  const schoolCard=`
+  <div class="card">
+    <div class="cardHead"><h2>School information</h2><div class="hint">${isReceivedSubj?"Set by the adviser — read-only on your end":"Shared by every subject · appears on all reports and exports"}</div></div>
+    <div class="cardBody">
+      ${isReceivedSubj?`<div class="tip" style="background:#EAF1FA;border:1px solid #CBDDF2;margin-bottom:12px">ℹ️ This class's school details are managed by the <b>adviser</b>. Any changes they make appear here automatically. You only enter grades.</div>`:""}
+      <div class="formGrid">
+      ${inf("Region","region",s.region)}${inf("Division (SDO)","division",s.division)}
+      ${inf("District","district",s.district)}${inf("Track","track",s.track)}
+      ${inf("School address","address",s.address)}
+      ${inf("Grade level (e.g. Grade 11)","gradeLevelName",s.gradeLevelName)}
+      ${inf("School name","school",s.school)}${inf("School ID","schoolId",s.schoolId)}
+      ${isSHS?inf("Subject type","subjectType",s.subjectType):""}
+      ${inf("Adviser","teacher",s.teacher)}${inf("Adviser position","teacherPos",s.teacherPos)}
+      ${inf("School head","head",s.head)}${inf("School head position","headPos",s.headPos)}
+    </div></div>
+  </div>`;
   return `
   <div class="card">
     <div class="cardHead"><h2>Grading weights</h2><div class="hint">Applied to subjects you create · must total 100%</div>${wSet?`<span class="badge" style="margin-left:auto;background:#E4F4EB;color:var(--pass)">✓ Set</span>`:`<span class="badge" style="margin-left:auto">Not set</span>`}</div>
@@ -3095,19 +3194,7 @@ function vSettings(){
       ${isTransmutedSY()?`<button class="btn sm" id="showTransmu" style="margin-left:auto">View transmutation table</button>`:""}
     </div>
   </div>
-  <div class="card">
-    <div class="cardHead"><h2>School information</h2><div class="hint">Shared by every subject · appears on all reports and exports</div></div>
-    <div class="cardBody"><div class="formGrid">
-      ${inp("Region","region",s.region)}${inp("Division (SDO)","division",s.division)}
-      ${inp("District","district",s.district)}${inp("Track","track",s.track)}
-      ${inp("School address","address",s.address)}
-      ${inp("Grade level (e.g. Grade 11)","gradeLevelName",s.gradeLevelName)}
-      ${inp("School name","school",s.school)}${inp("School ID","schoolId",s.schoolId)}
-      ${isSHS?inp("Subject type","subjectType",s.subjectType):""}
-      ${inp("Adviser","teacher",s.teacher)}${inp("Adviser position","teacherPos",s.teacherPos)}
-      ${inp("School head","head",s.head)}${inp("School head position","headPos",s.headPos)}
-    </div></div>
-  </div>
+  ${schoolCard}
   <div class="card">
     <div class="cardHead"><h2>Logos</h2><div class="hint">Used on report headers (SF9, etc.)</div></div>
     <div class="cardBody">
@@ -3458,9 +3545,9 @@ function vClasses(){
       if(isMapehChild(r))return "";
       const cs=r.classShare;
       const gone=classSharedOut(r)&&transferAccepted(r);
-      const status=gone?`<span class="badge" style="background:#F0E6F5;color:#7A4E96">transferred</span>`
+      const status=gone?`<span class="badge" style="background:#E4F4EB;color:var(--pass)">transferred</span>`
         :cs?`<span class="badge" style="background:#FFF2CC;color:#8A6D1F">awaiting acceptance</span>`
-        :`<span class="hint">yours</span>`;
+        :`<span class="badge" style="background:#EEF2F7;color:var(--muted)">not transferred</span>`;
       const n=assignedLearners(id).length;
       return `<tr>
         <td class="l"><b>${esc(r.settings.subject||r.name)}</b>${isMapehParent(r)?` <span class="badge" style="background:#EAF1FA;color:var(--blue)">3 parts</span>`:""}</td>
@@ -4997,9 +5084,10 @@ function vSubjects(){
     const cs=r.classShare;
     const isAccepted=!!r.fromAdviser&&!r.handedBack;
     const isHandedBack=!!r.handedBack;
-    const statusCell=isMapehParent(r)?(cs?`<span class="badge" style="background:#E4F4EB;color:var(--pass)">transferred</span>`:`<span class="hint">graded in its two parts</span>`)
+    const statusCell=isMapehParent(r)?(cs?`<span class="badge" style="background:#E4F4EB;color:var(--pass)">transferred</span>`:(isAccepted?`<span class="badge" style="background:#EAF1FA;color:var(--blue)">received</span>`:`<span class="hint">graded in its two parts</span>`))
       : isHandedBack?`<span class="badge" style="background:#F0E6F5;color:#7A4E96">handed back · read-only</span>`
-      : (cs?(transferAccepted(r)?`<span class="badge" style="background:#E4F4EB;color:var(--pass)">transferred</span>`:`<span class="badge" style="background:#FFF2CC;color:#8A6D1F">awaiting acceptance</span>`):`<span class="hint">not transferred</span>`);
+      : isAccepted?`<span class="badge" style="background:#EAF1FA;color:var(--blue)">received</span>`
+      : (cs?(transferAccepted(r)?`<span class="badge" style="background:#E4F4EB;color:var(--pass)">transferred</span>`:`<span class="badge" style="background:#FFF2CC;color:#8A6D1F">awaiting acceptance</span>`):`<span class="badge" style="background:#EEF2F7;color:var(--muted)">not transferred</span>`);
     const main=`<tr>
       <td class="l"><b>${esc(s.subject||r.name)}</b>${isMapehParent(r)?` <span class="badge" style="background:#EAF1FA;color:var(--blue)">split</span>`:""}
         ${r.fromAdviser?`<div class="hint" style="margin:2px 0 0;font-size:10.5px">from ${esc(r.fromAdviser)}</div>`:""}</td>
@@ -5014,13 +5102,18 @@ function vSubjects(){
           const canLock=owned&&accepted&&!isHandedBack; // lock only once a teacher holds it
           const lockBtn=canLock?`<button class="btn sm ${r.lockedByMe?"accent":""}" data-clslock="${id}" title="${r.lockedByMe?"Unlock so the subject teacher can edit grades again":"Lock grades so the subject teacher can no longer edit (set a deadline)"}">${r.lockedByMe?"🔒 Unlock grades":"🔓 Lock grades"}</button>`:"";
           if(isHandedBack)return "";
-          if(isAccepted)return `<button class="btn sm primary" data-postgrades="${id}" title="Send your grades to the adviser">${r.postedAt?"Re-post grades":"Post grades"}</button>`;
+          if(isAccepted){
+            const post=`<button class="btn sm primary" data-postgrades="${id}" title="Send your grades to the adviser">${r.postedAt?"Re-post grades":"Post grades"}</button>`;
+            const dl=hasSubjectGrades(id)?`<button class="btn sm" data-subjexport="${id}" title="Download this subject's full record (grades, terms, attendance, roster)">⬇ Download record</button>`:"";
+            const up=`<button class="btn sm" data-subjimport="${id}" title="Replace this subject's entire grade record from a file (class info stays with the adviser)">⬆ Upload record</button>`;
+            return post+dl+up;
+          }
           const shareBtn=`<button class="btn sm" data-clsshare="${id}">${cs?"Show transfer code":"Transfer class"}</button>`;
           const cancelBtn=(cs&&!transferAccepted(r))?`<button class="btn sm danger" data-clscancel="${id}" title="Cancel this transfer and keep the class">Cancel transfer</button>`:"";
           return shareBtn+lockBtn+cancelBtn;
         })()}
-        <button class="btn sm" data-subjexport="${id}" title="Download this subject's full data (all terms, attendance, roster, settings) as a file">Export data</button>
-        <button class="btn sm" data-subjimport="${id}" title="Load subject data from a file into this subject (overwrites its grades, terms and attendance)">Import data</button>
+        ${(!(!!r.fromAdviser&&!r.handedBack))?`<button class="btn sm" data-subjexport="${id}" title="Download this subject's full data (all terms, attendance, roster, settings) as a file">Export data</button>
+        <button class="btn sm" data-subjimport="${id}" title="Load subject data from a file into this subject (overwrites its grades, terms and attendance)">Import data</button>`:""}
         <button class="btn sm" data-clsopen="${id}">Open</button>
       </td></tr>`;
     const subs=kids.map(k=>{
@@ -5822,7 +5915,11 @@ function bindView(){
       r.settings.gradeSection=cl.name;
       r.settings.schoolYear=cl.sy;
     });
-    commit();renderAll();toast("Section info saved — applied to all subjects","success");
+    commit();
+    // Also push the updated class info to any subject transferred to a teacher,
+    // so their copy reflects the adviser's changes (via the roster channel).
+    publishRoster(cid).catch(()=>{});
+    renderAll();toast("Section info saved — applied to all subjects (including transferred ones)","success");
   }));
   $$("#content [data-openpool]").forEach(b=>b.addEventListener("click",()=>{
     root.activeClassId=b.dataset.openpool;commit();setView("pool");
@@ -8993,6 +9090,10 @@ $("#railPin").addEventListener("click",e=>{
 })();
 window.addEventListener("online",()=>{if(dirty)schedulePush()});
 window.addEventListener("offline",()=>setSync("offline"));
+// If you leave or hide the page with unsynced edits, push immediately so the
+// coalescing delay never costs you data.
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushPush();});
+window.addEventListener("pagehide",()=>{try{flushPush();}catch(e){}});
 
 let _offlineNoticeShown=false;
 function showOfflineNotice(){

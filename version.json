@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.21-113",
-  "notes": "Import fix (scores no longer lost — re-keyed to pool ids by name), incl. MAPEH 3 parts. Offline-first save with auto-sync + auto-post on reconnect. Student names/identity are adviser-only (teachers enter scores only); adviser edits reflect to all subjects via the pool. -Ram"
-}

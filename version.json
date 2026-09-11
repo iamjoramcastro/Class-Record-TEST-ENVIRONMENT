@@ -1,4 +1,0 @@
-{
-  "version": "2026.08.21-114",
-  "notes": "Code audit fixes: (1) dirty-flag race — edits made during an in-flight cloud push are no longer left unsynced; (2) remote-update no longer overwrites unsynced local edits (pushes them first); (3) computeTerm hardened against corrupt/missing term data so grade computation and activeId swaps never crash. -Ram"
-}

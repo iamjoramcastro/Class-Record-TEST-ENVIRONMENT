@@ -1,0 +1,4 @@
+{
+  "version": "2026.08.21-116",
+  "notes": "Sidebar record picker is now two clean steps: choose a Section first, then only that section subjects appear in the Subject dropdown — no more long list of every subject at once. -Ram"
+}
